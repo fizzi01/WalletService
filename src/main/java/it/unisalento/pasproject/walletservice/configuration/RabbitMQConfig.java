@@ -55,7 +55,7 @@ public class RabbitMQConfig {
 
     @Bean
     public Queue userDataQueue() {
-        return new Queue(userDataQueue, true);
+        return new Queue(userDataQueue);
     }
 
     

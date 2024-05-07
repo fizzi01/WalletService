@@ -1,0 +1,39 @@
+services:
+
+  wallet-service:
+    image: openjdk:22-jdk-oracle
+    container_name: walletimage
+    ports:
+      - 8081:8080
+      - 8001:8000
+    expose:
+      - "8001"
+    depends_on:
+      - wallet-db
+    networks:
+      - greenspot-net
+    volumes:
+      - ./build/libs/WalletService-v0.0.0.jar:/app/app.jar
+    working_dir: /app
+    entrypoint: java -Xdebug -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:8000 -jar /app/app.jar
+
+  wallet-db:
+    image: mongo:latest
+    container_name: walletdb
+    ports:
+      - 27016:27017
+    volumes:
+      - mongo_wallet:/etc/mongo
+      - mongo_wallet_data:/data/db
+      - mongo_wallet_config:/data/configdb
+    networks:
+      - greenspot-net
+
+networks:
+  greenspot-net:
+    name: greenspot_net
+
+volumes:
+  mongo_wallet:
+  mongo_wallet_data:
+  mongo_wallet_config:
