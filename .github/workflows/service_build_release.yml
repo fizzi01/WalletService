@@ -3,7 +3,8 @@ name: Build and Release Service
 on:
   push:
     branches:
-      - main 
+      - main
+      - master
     paths:
       - '**/*.java'
       - '**/application.properties'
