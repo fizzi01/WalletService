@@ -4,6 +4,8 @@ import it.unisalento.pasproject.walletservice.domain.Wallet;
 import it.unisalento.pasproject.walletservice.dto.MessageDTO;
 import it.unisalento.pasproject.walletservice.dto.RequestTransactionDTO;
 import it.unisalento.pasproject.walletservice.repositories.WalletRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,6 +22,9 @@ public class WalletMessageHandler {
     @Autowired
     private WalletService walletService;
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(WalletMessageHandler.class);
+
+
     @RabbitListener(queues = "${rabbitmq.queue.receiveTransaction.name}")
     public MessageDTO receiveTransaction(RequestTransactionDTO message) {
 
@@ -29,23 +34,37 @@ public class WalletMessageHandler {
         String transactionId = message.getId();
 
         //Controlla se il mittente ha abbastanza soldi
-        Optional<Wallet> sender = walletRepository.findById(mittente);
+        Optional<Wallet> sender = walletRepository.findByEmail(mittente);
 
-        if(sender.isEmpty() || sender.get().getBalance() < importo || !sender.get().getIsEnable()) {
+        if (sender.isEmpty()) {
+            LOGGER.info("Transaction failed: sender not found");
+            return new MessageDTO(transactionId, 400);
+        }
+
+        Wallet senderWallet = sender.get();
+
+        if(senderWallet.getBalance() < importo || !senderWallet.getIsEnable()) {
+            LOGGER.info("Transaction failed: Sender not enough money");
+            LOGGER.info("Sender balance: {}", senderWallet.getBalance());
             return new MessageDTO(transactionId, 400);
         }
 
         //Controlla se il destinatario è abilitato
-        Optional<Wallet> receiver = walletRepository.findById(destinatario);
+        Optional<Wallet> receiver = walletRepository.findByEmail(destinatario);
 
-        if(receiver.isEmpty() || !receiver.get().getIsEnable()) {
+        if (receiver.isEmpty()){
+            LOGGER.info("Transaction failed: receiver not found");
+            return new MessageDTO(transactionId, 400);
+        }
+
+        Wallet receiverWallet = receiver.get();
+
+        if(!receiver.get().getIsEnable()) {
+            LOGGER.info("Transaction failed: receiver not enabled");
             return new MessageDTO(transactionId, 400);
         }
 
         //Se il mittente ha abbastanza soldi e il destinatario è abilitato, esegui la transazione
-        Wallet senderWallet = sender.get();
-        Wallet receiverWallet = receiver.get();
-
         senderWallet.setBalance(senderWallet.getBalance() - importo);
         receiverWallet.setBalance(receiverWallet.getBalance() + importo);
 
@@ -56,6 +75,7 @@ public class WalletMessageHandler {
             return new MessageDTO(transactionId, 400);
         }
 
+        LOGGER.info("Transaction {} completed", transactionId);
         return new MessageDTO(transactionId, 200);
     }
 

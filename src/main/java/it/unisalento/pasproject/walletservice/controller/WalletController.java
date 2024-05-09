@@ -1,5 +1,6 @@
 package it.unisalento.pasproject.walletservice.controller;
 
+import it.unisalento.pasproject.walletservice.domain.Wallet;
 import it.unisalento.pasproject.walletservice.dto.WalletDTO;
 import it.unisalento.pasproject.walletservice.dto.WalletListDTO;
 import it.unisalento.pasproject.walletservice.exceptions.WalletNotFoundException;
@@ -60,23 +61,47 @@ public class WalletController {
 
     @PutMapping(value="/update/balance")
     public WalletDTO updateBalance(@RequestParam String email, @RequestParam double balance) throws WalletNotFoundException {
-        WalletDTO walletDTO = walletRepository.findByEmail(email).map(walletService::getWalletDTO).orElseThrow(WalletNotFoundException::new);
-        walletDTO.setBalance(balance);
-        return walletService.getWalletDTO(walletRepository.save(walletService.getWallet(walletDTO)));
+
+        Optional<Wallet> wallet = walletRepository.findByEmail(email);
+
+        if (wallet.isEmpty()) {
+            throw new WalletNotFoundException();
+        }
+
+        Wallet ret = wallet.get();
+        ret.setBalance(balance);
+
+        return walletService.getWalletDTO(walletRepository.save(ret));
     }
 
     @PutMapping(value="/update/enable")
     public WalletDTO updateEnable(@RequestParam String email, @RequestParam boolean isEnable) throws WalletNotFoundException {
-        WalletDTO walletDTO = walletRepository.findByEmail(email).map(walletService::getWalletDTO).orElseThrow(WalletNotFoundException::new);
-        walletDTO.setIsEnable(isEnable);
-        return walletService.getWalletDTO(walletRepository.save(walletService.getWallet(walletDTO)));
+
+        Optional<Wallet> wallet = walletRepository.findByEmail(email);
+
+        if (wallet.isEmpty()) {
+            throw new WalletNotFoundException();
+        }
+
+        Wallet ret = wallet.get();
+        ret.setIsEnable(isEnable);
+
+        return walletService.getWalletDTO(walletRepository.save(ret));
     }
 
     @PutMapping(value="/reset")
     public WalletDTO resetWallet(@RequestParam String email) throws WalletNotFoundException {
-        WalletDTO walletDTO = walletRepository.findByEmail(email).map(walletService::getWalletDTO).orElseThrow(WalletNotFoundException::new);
-        walletDTO.setBalance(0.0);
-        return walletService.getWalletDTO(walletRepository.save(walletService.getWallet(walletDTO)));
+
+        Optional<Wallet> wallet = walletRepository.findByEmail(email);
+
+        if (wallet.isEmpty()) {
+            throw new WalletNotFoundException();
+        }
+
+        Wallet ret = wallet.get();
+        ret.setBalance(0.0);
+
+        return walletService.getWalletDTO(walletRepository.save(ret));
     }
 
 
