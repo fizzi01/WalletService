@@ -78,6 +78,40 @@ public class RabbitMQConfig {
                 .with(userDataKey);
     }
 
+    // ------  END USER DATA  ------ //
+
+    // ----- TRANSACTIONS HANDLER  ----- //
+
+
+
+    @Value("${rabbitmq.routing.execTransaction.name}")
+    private String transactionExecutionRoutingKey;
+
+    @Value("${rabbitmq.exchange.transaction.name}")
+    private String transactionExchange;
+
+    @Value("${rabbitmq.queue.receiveTransaction.name}")
+    private String transactionReceiveQueue;
+
+    @Bean
+    public Queue transactionReceiveQueue() {
+        return new Queue(transactionReceiveQueue);
+    }
+
+    @Bean
+    public TopicExchange transactionExchange() {
+        return new TopicExchange(transactionExchange);
+    }
+
+    @Bean
+    public Binding transactionBinding() {
+        return BindingBuilder
+                .bind(transactionReceiveQueue())
+                .to(transactionExchange())
+                .with(transactionExecutionRoutingKey);
+    }
+
+
     /**
      * Creates a message converter for JSON messages.
      *
