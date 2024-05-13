@@ -80,6 +80,30 @@ public class RabbitMQConfig {
 
     // ------  END USER DATA  ------ //
 
+    // ----- GENERAL DATA HANDLER  ----- //
+
+    @Value("${rabbitmq.routing.receiveData.key}")
+    private String generalDataKey;
+
+    @Value("${rabbitmq.queue.receiveData.name}")
+    private String generalDataQueue;
+
+    @Bean
+    public Queue generalDataQueue() {
+        return new Queue(generalDataQueue);
+    }
+
+    @Bean
+    public Binding generalDataBinding() {
+        return BindingBuilder
+                .bind(generalDataQueue())
+                .to(dataExchange())
+                .with(generalDataKey);
+    }
+
+    // ----- END GENERAL DATA HANDLER  ----- //
+
+
     // ----- TRANSACTIONS HANDLER  ----- //
 
 

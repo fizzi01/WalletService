@@ -47,15 +47,30 @@ public class WalletController {
 
     @PostMapping(value="/add", consumes = MediaType.APPLICATION_JSON_VALUE)
     public WalletDTO addWallet(@RequestBody WalletDTO walletDTO) {
+
+        Optional<Wallet> wallet = walletRepository.findByEmail(walletDTO.getEmail());
+
+        if ( wallet.isPresent() ) {
+            return walletService.getWalletDTO(wallet.get());
+        }
+
         return walletService.getWalletDTO(walletRepository.save(walletService.getWallet(walletDTO)));
     }
 
     @PostMapping(value="/add")
     public WalletDTO addWallet(@RequestParam String email, @RequestParam double balance) {
+
+        Optional<Wallet> wallet = walletRepository.findByEmail(email);
+
+        if ( wallet.isPresent() ) {
+            return walletService.getWalletDTO(wallet.get());
+        }
+
         WalletDTO walletDTO = new WalletDTO();
         walletDTO.setEmail(email);
         walletDTO.setBalance(balance);
         walletDTO.setIsEnable(true);
+
         return walletService.getWalletDTO(walletRepository.save(walletService.getWallet(walletDTO)));
     }
 
