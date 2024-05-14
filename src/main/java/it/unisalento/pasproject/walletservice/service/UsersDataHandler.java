@@ -9,7 +9,10 @@ import it.unisalento.pasproject.walletservice.dto.UserDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Objects;
 import java.util.Optional;
+
+import static it.unisalento.pasproject.walletservice.security.SecurityConstants.ROLE_ADMIN;
 
 @Service
 public class UsersDataHandler {
@@ -28,6 +31,11 @@ public class UsersDataHandler {
     public void receiveMessage(UserDTO userDTO) {
 
         LOGGER.info("Received message: {}", userDTO);
+
+        if (ROLE_ADMIN.equalsIgnoreCase(userDTO.getRole())){
+            LOGGER.info("Admin user detected, skipping creation");
+            return;
+        }
 
         //Check if the user exists
         Optional<Wallet> walletOptional = walletRepository.findByEmail(userDTO.getEmail());
