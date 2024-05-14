@@ -31,7 +31,7 @@ public class WalletController {
         Optional<WalletDTO> walletDTO = walletRepository.findByEmail(email).map(walletService::getWalletDTO);
 
         if(walletDTO.isEmpty()){
-            throw new WalletNotFoundException();
+            throw new WalletNotFoundException("Wallet not found for owner: " + email);
         }
 
         return walletDTO.get();
@@ -80,7 +80,7 @@ public class WalletController {
         Optional<Wallet> wallet = walletRepository.findByEmail(email);
 
         if (wallet.isEmpty()) {
-            throw new WalletNotFoundException();
+            throw new WalletNotFoundException("Wallet not found for owner: " + email);
         }
 
         Wallet ret = wallet.get();
@@ -95,7 +95,7 @@ public class WalletController {
         Optional<Wallet> wallet = walletRepository.findByEmail(email);
 
         if (wallet.isEmpty()) {
-            throw new WalletNotFoundException();
+            throw new WalletNotFoundException("Wallet not found for owner: " + email);
         }
 
         Wallet ret = wallet.get();
@@ -110,7 +110,7 @@ public class WalletController {
         Optional<Wallet> wallet = walletRepository.findByEmail(email);
 
         if (wallet.isEmpty()) {
-            throw new WalletNotFoundException();
+            throw new WalletNotFoundException("Wallet not found for owner: " + email);
         }
 
         Wallet ret = wallet.get();
