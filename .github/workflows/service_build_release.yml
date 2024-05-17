@@ -69,6 +69,9 @@ jobs:
             version=$(git describe --tags --abbrev=0 --match "v*" || echo "v0.0.0")
           fi
           echo "TAG=$version" >> $GITHUB_ENV
+          
+          real_version=$(git describe --tags --abbrev=0 --match "v*" || echo "v0.0.0")
+          echo "REAL_OLD_TAG=$real_version" >> $GITHUB_ENV
 
       - name: Increment version
         id: new_version
@@ -96,7 +99,7 @@ jobs:
       - name: Get commits since last tag
         id: commit_messages
         run: |
-          latest_tag=${{ env.TAG }}
+          latest_tag=${{ env.REAL_OLD_TAG }}
           commits=$(git log ${latest_tag}..HEAD --pretty=format:"%s")
           echo "COMMITS=$commits" >> $GITHUB_ENV
           echo "COMMITS=$commits" >> $GITHUB_OUTPUT
