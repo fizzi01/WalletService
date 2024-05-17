@@ -93,11 +93,21 @@ jobs:
           echo "NEW_TAG=$new_version" >> $GITHUB_OUTPUT
       
 
+      - name: Get commits since last tag
+        id: commit_messages
+        run: |
+          latest_tag=${{ env.TAG }}
+          commits=$(git log ${latest_tag}..HEAD --pretty=format:"%s")
+          echo "COMMITS=$commits" >> $GITHUB_ENV
+          echo "COMMITS=$commits" >> $GITHUB_OUTPUT
+
       - name: Create and push new tag
-        uses: tvdias/github-tagger@v0.0.1
-        with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          tag: ${{ env.NEW_TAG }}
+        id: push_tag
+        run: |
+          new_tag=${{ env.NEW_TAG }}
+          commits=${{ env.COMMITS }}
+          git tag -a $new_tag -m "$commits"
+          git push origin $new_tag
 
       - name: Update build.gradle
         run: |
