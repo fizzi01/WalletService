@@ -55,6 +55,7 @@ jobs:
     permissions: write-all
     outputs:
       new-tag: ${{ steps.new_version.outputs.NEW_TAG }}
+      tag-message: ${{ steps.commit_messages.outputs.commit_messages }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -94,23 +95,7 @@ jobs:
           new_version="$major.$minor.$patch"
           echo "NEW_TAG=$new_version" >> $GITHUB_ENV
           echo "NEW_TAG=$new_version" >> $GITHUB_OUTPUT
-      
-
-      - name: Get commits since last tag
-        id: commit_messages
-        run: |
-          latest_tag=${{ env.REAL_OLD_TAG }}
-          commits=$(git log ${latest_tag}..HEAD --pretty=format:"%s")
-          echo "COMMITS=$commits" >> $GITHUB_ENV
-          echo "COMMITS=$commits" >> $GITHUB_OUTPUT
-
-      - name: Create and push new tag
-        id: push_tag
-        run: |
-          new_tag=${{ env.NEW_TAG }}
-          commits=${{ env.COMMITS }}
-          git tag -a $new_tag -m "$commits"
-          git push origin $new_tag
+    
 
       - name: Update build.gradle
         run: |
@@ -126,7 +111,6 @@ jobs:
           else
             echo "docker-compose.yml not found, skipping update."
           fi
-          
           
 
       - name: Commit and push changes
@@ -166,7 +150,7 @@ jobs:
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
           prerelease: false
-          automatic_release_tag: "${{  needs.prepare_release.outputs.new-tag }}"
+          automatic_release_tag: "latest"
           title: "Release ${{  needs.prepare_release.outputs.new-tag }}"
           files: |
             *.jar
@@ -240,6 +224,6 @@ jobs:
     name: Clean up
     steps:
       - name: Delete artifact
-        uses: geekyeggo/delete-artifact@v1
+        uses: geekyeggo/delete-artifact@v5
         with:
           name: service-jar
