@@ -3,7 +3,7 @@ package it.unisalento.pasproject.walletservice.service;
 
 import it.unisalento.pasproject.walletservice.business.io.exchanger.MessageExchangeStrategy;
 import it.unisalento.pasproject.walletservice.business.io.exchanger.MessageExchanger;
-import it.unisalento.pasproject.walletservice.security.UserDetailsDTO;
+import it.unisalento.pasproject.walletservice.dto.UserDetailsDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

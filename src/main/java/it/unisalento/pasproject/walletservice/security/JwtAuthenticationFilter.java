@@ -1,6 +1,9 @@
 package it.unisalento.pasproject.walletservice.security;
 
 
+import it.unisalento.pasproject.walletservice.dto.UserDetailsDTO;
+import it.unisalento.pasproject.walletservice.exceptions.AccessDeniedException;
+import it.unisalento.pasproject.walletservice.exceptions.UserNotAuthorizedException;
 import it.unisalento.pasproject.walletservice.service.UserCheckService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -26,17 +29,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
-            throws ServletException, IOException {
+            throws ServletException, IOException, UserNotAuthorizedException {
 
         final String authorizationHeader = request.getHeader("Authorization");
 
         String username = null;
         String jwt = null;
 
-        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-            jwt = authorizationHeader.substring(7);
-            username = jwtUtilities.extractUsername(jwt);
+        try {
+            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                jwt = authorizationHeader.substring(7);
+                username = jwtUtilities.extractUsername(jwt);
+            }
+        } catch (Exception e) {
+            throw new AccessDeniedException("Invalid token");
         }
+
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetailsDTO user = this.userCheckService.loadUserByUsername(username);
@@ -52,6 +60,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 usernamePasswordAuthenticationToken
                         .setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
+            } else {
+                throw new UserNotAuthorizedException("User not authorized");
             }
         }
 

@@ -10,11 +10,8 @@ services:
       - "8001"
     depends_on:
       - wallet-db
-    environment:
-      - RABBIT_IP=204.216.223.141
-      - RABBIT_PORT=5672
-      - RABBIT_USER=guest
-      - RABBIT_PASSWORD=guest
+    env_file:
+      - .env
     networks:
       - greenspot-net
     volumes:
