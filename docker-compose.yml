@@ -4,10 +4,8 @@ services:
     image: openjdk:22-jdk-oracle
     container_name: walletimage
     ports:
-      - 8081:8080
-      - 8001:8000
-    expose:
-      - "8001"
+      - "${SERVICE_PORT1}:8080"
+      - "${SERVICE_PORT2}:8000"
     depends_on:
       - wallet-db
     env_file:
@@ -23,7 +21,7 @@ services:
     image: mongo:latest
     container_name: walletdb
     ports:
-      - 27016:27017
+      - "${MONGO_PORT}:27017"
     volumes:
       - mongo_wallet:/etc/mongo
       - mongo_wallet_data:/data/db
