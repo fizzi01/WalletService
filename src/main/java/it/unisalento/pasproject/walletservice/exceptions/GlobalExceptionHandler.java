@@ -24,6 +24,17 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return ResponseEntity.status(exception.getErrorResponse().getStatus()).body(exception.getErrorResponse());
     }
 
+    @ExceptionHandler(AccessDeniedException.class)
+    protected ResponseEntity<CustomErrorResponse> handleAccessDeniedException(AccessDeniedException ex) {
+        CustomErrorResponse errorResponse = CustomErrorResponse.builder()
+                .traceId(UUID.randomUUID().toString())
+                .timestamp(OffsetDateTime.now().toString())
+                .status(HttpStatus.FORBIDDEN)
+                .message(ex.getMessage())
+                .build();
+        return ResponseEntity.status(errorResponse.getStatus()).body(errorResponse);
+    }
+
     // Gestione generale di tutte le eccezioni predefinite
     @Override
     protected ResponseEntity<Object> handleExceptionInternal(Exception ex, Object body, HttpHeaders headers, HttpStatusCode statusCode, WebRequest request) {
