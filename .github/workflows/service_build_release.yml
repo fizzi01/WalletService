@@ -17,7 +17,7 @@ on:
       - '**/application.properties'
       - '**/resources/*'
       - '*.gradle'
-      
+
 jobs:
   build:
     name: Build Service Jar
@@ -45,7 +45,7 @@ jobs:
           name: service-jar
           path: build/libs/*.jar
 
-        
+
 
   prepare_release:
     name: Prepare release
@@ -101,7 +101,7 @@ jobs:
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ env.NEW_TAG }}
-    
+
 
       - name: Update build.gradle
         run: |
