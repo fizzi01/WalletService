@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
 
-import static it.unisalento.pasproject.walletservice.security.SecurityConstants.ROLE_ADMIN;
+import static it.unisalento.pasproject.walletservice.security.SecurityConstants.*;
 
 @RestController
 @RequestMapping("/api/users/wallet")
@@ -34,9 +34,15 @@ public class WalletController {
     }
 
     @GetMapping(value="/find")
-    public WalletDTO getWallet(@RequestParam String email) throws WalletNotFoundException {
+    public WalletDTO getWallet(@RequestParam(required = false) String email) throws WalletNotFoundException {
 
-        if (!userCheckService.isCorrectUser(email) && !userCheckService.isAdministrator()) {
+        //Fallback to current session user
+        if (email == null){
+            email = userCheckService.getCurrentUserEmail();
+        }
+
+        if (Boolean.TRUE.equals(!userCheckService.isCorrectUser(email))
+                && Boolean.TRUE.equals(!userCheckService.isAdministrator())) {
             throw new WrongUserException("User not allowed to access wallet owner: " + email);
         }
 
@@ -51,23 +57,36 @@ public class WalletController {
     }
 
     @GetMapping(value="/findall")
+    @Secured({ROLE_ADMIN})
     public WalletListDTO getWallets() {
         WalletListDTO walletListDTO = new WalletListDTO();
         walletListDTO.setWallets(walletRepository.findAll().stream().map(walletService::getWalletDTO).toList());
         return walletListDTO;
     }
 
+    /**
+     * Add a new wallet for the user
+     * @param walletDTO the wallet to add
+     * @return the wallet added
+     */
     @PostMapping(value="/add", consumes = MediaType.APPLICATION_JSON_VALUE)
     public WalletDTO addWallet(@RequestBody WalletDTO walletDTO) {
 
-        if (!userCheckService.isCorrectUser(walletDTO.getEmail()) && !userCheckService.isAdministrator()) {
+        if (Boolean.TRUE.equals(!userCheckService.isCorrectUser(walletDTO.getEmail()))
+                && Boolean.TRUE.equals(!userCheckService.isAdministrator())) {
             throw new WrongUserException("User not allowed to create wallet for a different owner: " + walletDTO.getEmail());
         } // Se è un admin può creare wallet per altri users
 
         Optional<Wallet> wallet = walletRepository.findByEmail(walletDTO.getEmail());
 
+        // If the wallet already exists, return it
         if ( wallet.isPresent() ) {
             return walletService.getWalletDTO(wallet.get());
+        }
+
+        //Prevent users from setting their own balance
+        if(Boolean.FALSE.equals(userCheckService.isAdministrator())){
+            walletDTO.setBalance(0.0);
         }
 
         return walletService.getWalletDTO(walletRepository.save(walletService.getWallet(walletDTO)));
@@ -76,7 +95,8 @@ public class WalletController {
     @PostMapping(value="/add")
     public WalletDTO addWallet(@RequestParam String email, @RequestParam double balance) {
 
-        if (!userCheckService.isCorrectUser(email) && !userCheckService.isAdministrator()) {
+        if (Boolean.TRUE.equals(!userCheckService.isCorrectUser(email))
+                && Boolean.TRUE.equals(!userCheckService.isAdministrator())) {
             throw new WrongUserException("User not allowed to create wallet for a different owner: " + email);
         }
 
@@ -87,8 +107,13 @@ public class WalletController {
         }
 
         WalletDTO walletDTO = new WalletDTO();
+        //Prevent users from setting their own balance
+        if(Boolean.FALSE.equals(userCheckService.isAdministrator())){
+            walletDTO.setBalance(0.0);
+        } else {
+            walletDTO.setBalance(balance);
+        }
         walletDTO.setEmail(email);
-        walletDTO.setBalance(balance);
         walletDTO.setIsEnable(true);
 
         return walletService.getWalletDTO(walletRepository.save(walletService.getWallet(walletDTO)));
