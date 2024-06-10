@@ -29,32 +29,35 @@ public class UsersDataHandler {
 
     @RabbitListener(queues = "${rabbitmq.queue.userData.name}")
     public void receiveMessage(UserDTO userDTO) {
+        try {
+            LOGGER.info("Received message: {}", userDTO);
 
-        LOGGER.info("Received message: {}", userDTO);
+            if (ROLE_ADMIN.equalsIgnoreCase(userDTO.getRole())) {
+                LOGGER.info("Admin user detected, skipping creation");
+                return;
+            }
 
-        if (ROLE_ADMIN.equalsIgnoreCase(userDTO.getRole())){
-            LOGGER.info("Admin user detected, skipping creation");
-            return;
+            //Check if the user exists
+            Optional<Wallet> walletOptional = walletRepository.findByEmail(userDTO.getEmail());
+
+            if (walletOptional.isPresent()) {
+                LOGGER.info("User already exists");
+                return;
+            }
+
+            if (userDTO.getRole().equalsIgnoreCase("admin")) {
+                LOGGER.info("Admin user detected, skipping creation");
+                return;
+            }
+
+            Wallet wallet = new Wallet();
+            wallet.setEmail(userDTO.getEmail());
+            wallet.setBalance(0.0);
+            wallet.setIsEnable(true);
+
+            walletRepository.save(wallet);
+        } catch (Exception e) {
+            LOGGER.error(e.getMessage());
         }
-
-        //Check if the user exists
-        Optional<Wallet> walletOptional = walletRepository.findByEmail(userDTO.getEmail());
-
-        if (walletOptional.isPresent()) {
-            LOGGER.info("User already exists");
-            return;
-        }
-
-        if (userDTO.getRole().equalsIgnoreCase("admin")) {
-            LOGGER.info("Admin user detected, skipping creation");
-            return;
-        }
-
-        Wallet wallet = new Wallet();
-        wallet.setEmail(userDTO.getEmail());
-        wallet.setBalance(0.0);
-        wallet.setIsEnable(true);
-
-        walletRepository.save(wallet);
     }
 }

@@ -2,7 +2,6 @@ package it.unisalento.pasproject.walletservice.service;
 
 import it.unisalento.pasproject.walletservice.domain.Wallet;
 import it.unisalento.pasproject.walletservice.dto.GeneralDataDTO;
-import it.unisalento.pasproject.walletservice.dto.UserDTO;
 import it.unisalento.pasproject.walletservice.repositories.WalletRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,22 +28,25 @@ public class GeneralDataHandler {
 
     @RabbitListener(queues = "${rabbitmq.queue.receiveData.name}")
     public void receiveMessage(GeneralDataDTO dataDTO) {
+        try {
+            LOGGER.info("Received message: {}", dataDTO);
 
-        LOGGER.info("Received message: {}", dataDTO);
+            //Check if the user exists
+            Optional<Wallet> walletOptional = walletRepository.findByEmail(dataDTO.getId());
 
-        //Check if the user exists
-        Optional<Wallet> walletOptional = walletRepository.findByEmail(dataDTO.getId());
+            if (walletOptional.isPresent()) {
+                LOGGER.info("User already exists");
+                return;
+            }
 
-        if (walletOptional.isPresent()) {
-            LOGGER.info("User already exists");
-            return;
+            Wallet wallet = new Wallet();
+            wallet.setEmail(dataDTO.getId());
+            wallet.setBalance(0.0);
+            wallet.setIsEnable(true);
+
+            walletRepository.save(wallet);
+        } catch (Exception e) {
+            LOGGER.error(e.getMessage());
         }
-
-        Wallet wallet = new Wallet();
-        wallet.setEmail(dataDTO.getId());
-        wallet.setBalance(0.0);
-        wallet.setIsEnable(true);
-
-        walletRepository.save(wallet);
     }
 }
