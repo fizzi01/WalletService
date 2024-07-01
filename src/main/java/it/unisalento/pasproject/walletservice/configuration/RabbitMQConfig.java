@@ -101,6 +101,25 @@ public class RabbitMQConfig {
                 .with(generalDataKey);
     }
 
+    @Value("${rabbitmq.routing.refill.name}")
+    private String generalRefillKey;
+
+    @Value("${rabbitmq.queue.generalRequest.name}")
+    private String generalRequestQueue;
+
+    @Bean
+    public Queue generalRequestQueue() {
+        return new Queue(generalRequestQueue);
+    }
+
+    @Bean
+    public Binding generalRefillBinding() {
+        return BindingBuilder
+                .bind(generalRequestQueue())
+                .to(dataExchange())
+                .with(generalRefillKey);
+    }
+
     // ----- END GENERAL DATA HANDLER  ----- //
 
 
