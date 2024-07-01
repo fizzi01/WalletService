@@ -13,6 +13,8 @@ import java.util.Objects;
 import java.util.Optional;
 
 import static it.unisalento.pasproject.walletservice.security.SecurityConstants.ROLE_ADMIN;
+import static it.unisalento.pasproject.walletservice.security.SecurityConstants.ROLE_UTENTE;
+import static it.unisalento.pasproject.walletservice.security.WalletConstants.UTENTE_INITIAL_BALANCE;
 
 @Service
 public class UsersDataHandler {
@@ -50,9 +52,15 @@ public class UsersDataHandler {
                 return;
             }
 
+            double balance = 0.0;
+
+            if (ROLE_UTENTE.equalsIgnoreCase(userDTO.getRole())) {
+                balance = UTENTE_INITIAL_BALANCE;
+            }
+
             Wallet wallet = new Wallet();
             wallet.setEmail(userDTO.getEmail());
-            wallet.setBalance(0.0);
+            wallet.setBalance(balance);
             wallet.setIsEnable(true);
 
             walletRepository.save(wallet);
