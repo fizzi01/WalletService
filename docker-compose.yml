@@ -13,7 +13,7 @@ services:
     networks:
       - greenspot-net
     volumes:
-      - ./build/libs/WalletService-v1.0.10.jar:/app/app.jar
+      - ./build/libs/WalletService-v1.1.0.jar:/app/app.jar
     working_dir: /app
     entrypoint: java -Xdebug -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:8000 -jar /app/app.jar
 
