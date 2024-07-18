@@ -11,6 +11,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Answers;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,9 +29,10 @@ import java.util.Optional;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -61,6 +63,71 @@ class WalletControllerTest {
     void setUp() {
         given(walletRepository.save(any(Wallet.class))).willAnswer(invocation -> invocation.getArgument(0));
     }
+
+    @Test
+    @WithMockUser(username = "admin@example.com", roles = {"ADMIN"})
+    void addWalletAsAdminCreatesWalletWithSpecifiedBalance() throws Exception {
+        when(userCheckService.isAdministrator()).thenReturn(true);
+        when(walletRepository.findByEmail(any())).thenReturn(Optional.empty());
+
+        mockMvc.perform(post("/api/users/wallet/add")
+                        .param("email", "user@example.com")
+                        .param("balance", "100.0"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.balance", is(100.0)));
+
+        ArgumentCaptor<Wallet> walletCaptor = ArgumentCaptor.forClass(Wallet.class);
+        verify(walletRepository).save(walletCaptor.capture());
+        assert walletCaptor.getValue().getBalance() == 100.0;
+    }
+
+    @Test
+    @WithMockUser(username = "user@example.com", roles = {"USER"})
+    void addWalletAsUserSetsBalanceToZero() throws Exception {
+        when(walletRepository.findByEmail(any())).thenReturn(Optional.empty());
+
+        mockMvc.perform(post("/api/users/wallet/add")
+                        .param("email", "user@example.com")
+                        .param("balance", "50.0"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.balance", is(0.0)));
+
+        ArgumentCaptor<Wallet> walletCaptor = ArgumentCaptor.forClass(Wallet.class);
+        verify(walletRepository).save(walletCaptor.capture());
+        assert walletCaptor.getValue().getBalance() == 0.0;
+    }
+
+    @Test
+    @WithMockUser(username = "user@example.com", roles = {"USER"})
+    void addWalletForDifferentUserThrowsException() throws Exception {
+        when(userCheckService.isAdministrator()).thenReturn(false);
+
+        mockMvc.perform(post("/api/users/wallet/add")
+                        .param("email", "other@example.com")
+                        .param("balance", "100.0"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = "admin@example.com", roles = {"ADMIN"})
+    void addWalletWhenWalletExistsReturnsExistingWallet() throws Exception {
+        Wallet existingWallet = new Wallet();
+        existingWallet.setEmail("user@example.com");
+        existingWallet.setBalance(100.0);
+        existingWallet.setIsEnable(true);
+
+        when(userCheckService.isAdministrator()).thenReturn(true);
+        when(walletRepository.findByEmail(eq("user@example.com"))).thenReturn(Optional.of(existingWallet));
+
+        mockMvc.perform(post("/api/users/wallet/add")
+                        .param("email", "user@example.com")
+                        .param("balance", "200.0"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.balance", is(100.0))); // Expecting the balance to remain as in the existing wallet
+
+        verify(walletRepository).findByEmail("user@example.com");
+    }
+
 
     @Test
     @WithMockUser(username = "valid@example.com", roles = {"MEMBRO"})

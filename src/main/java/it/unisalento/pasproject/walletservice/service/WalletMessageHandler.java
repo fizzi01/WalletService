@@ -15,11 +15,13 @@ import java.util.Optional;
 @Service
 public class WalletMessageHandler {
 
-    @Autowired
-    private WalletRepository walletRepository;
+
+    private final WalletRepository walletRepository;
 
     @Autowired
-    private WalletService walletService;
+    public WalletMessageHandler(WalletRepository walletRepository) {
+        this.walletRepository = walletRepository;
+    }
 
     private static final Logger LOGGER = LoggerFactory.getLogger(WalletMessageHandler.class);
 
